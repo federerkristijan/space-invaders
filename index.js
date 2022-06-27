@@ -64,7 +64,40 @@ class Player {
   }
 }
 
+class Projectile {
+  constructor({ position, velocity }) {
+    this.position = position
+    this.velocity = velocity
+    this.radius = 3
+  }
+
+  draw() {
+    context.beginPath()
+    context.arc(
+      this.position.x,
+      this.position.y,
+      this.radius,
+      0,
+      Math.PI * 2
+    )
+
+    context.fillStyle = 'red'
+    context.fill()
+    context.closePath()
+  }
+
+  update() {
+    this.draw()
+    this.position.x += this.velocity.x
+    this.position.y += this.velocity.y
+  }
+}
+
 const player1 = new Player()
+
+const projectiles = [
+  ]
+
 const keys = {
   a: {
     pressed: false
@@ -88,6 +121,17 @@ function animate() {
   context.fillStyle = 'black'
   context.fillRect(0, 0, canvas.width, canvas.height)
   player1.update()
+  projectiles.forEach((projectile, i) => {
+    // deleting projectiles that are out of the screen from the game
+    if (projectile.position.y + projectile.radius <= 0) {
+      // preventing bug with projectiles flashing
+    setTimeout(() => {
+      projectiles.splice(i, 1)
+    }, 0)
+    } else {
+      projectile.update()
+    }
+  })
 
   // movement: limited to fit the canvas, keyup & keydown and mini rotation of the image
   if (keys.a.pressed && player1.position.x >= 0) {
@@ -98,6 +142,7 @@ function animate() {
     player1.rotation = 0.15
   } else {
     player1.velocity.x = 0
+    player1.rotation = 0
   }
 
   // if (keys.d.pressed) {
@@ -129,22 +174,33 @@ addEventListener('keydown', ({key}) => {
       keys.a.pressed = true
       break
     case 'd':
-      console.log('right')
+      // console.log('right')
       // player1.velocity.x = 5
       keys.d.pressed = true
       break
     case 'w':
-      console.log('up')
+      // console.log('up')
       player1.velocity.y = -5
       keys.w.pressed = true
       break
     case 's':
-      console.log('down')
+      // console.log('down')
       player1.velocity.y = 5
       keys.s.pressed = true
       break
     case 'q':
-      console.log('shot')
+      // console.log('shot')
+      projectiles.push(new Projectile({
+        position: {
+          x: player1.position.x + player1.width / 2,
+          y: player1.position.y
+        },
+
+        velocity: {
+          x: 0,
+          y: -10
+        }
+      }))
       keys.q.pressed = true
       break
   }
