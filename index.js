@@ -93,10 +93,57 @@ class Projectile {
   }
 }
 
+class Invader {
+  constructor() {
+    this.velocity = {
+      x: 0,
+      y: 0
+    }
+
+    const image = new Image()
+    image.src = './images/invader.png'
+    image.onload = () => {
+      const scale = 1
+      this.image = image
+      this.width = image.width * scale
+      this.height = image.height * scale
+      this.position = {
+        x: canvas.width / 2 - this.width / 2,
+        y: canvas.height / 2
+      }
+    }
+  }
+
+  draw() {
+    // context.fillStyle = 'red'
+    // context.fillRect(this.position.x, this. position.y, this.width, this.height)
+
+    context.drawImage(
+      this.image,
+      this.position.x,
+      this.position.y,
+      this.width,
+      this.height
+    )
+  }
+
+  update() {
+    if (this.image) {
+      this.draw()
+      // adding horizontal movement
+      this.position.x += this.velocity.x
+      // adding vertical movement
+      this.position.y += this.velocity.y
+    }
+  }
+}
+
 const player1 = new Player()
 
 const projectiles = [
   ]
+
+const invader = new Invader()
 
 const keys = {
   a: {
@@ -120,6 +167,7 @@ function animate() {
   requestAnimationFrame(animate)
   context.fillStyle = 'black'
   context.fillRect(0, 0, canvas.width, canvas.height)
+  invader.update()
   player1.update()
   projectiles.forEach((projectile, i) => {
     // deleting projectiles that are out of the screen from the game
