@@ -94,7 +94,7 @@ class Projectile {
 }
 
 class Invader {
-  constructor() {
+  constructor({position}) {
     this.velocity = {
       x: 0,
       y: 0
@@ -108,8 +108,8 @@ class Invader {
       this.width = image.width * scale
       this.height = image.height * scale
       this.position = {
-        x: canvas.width / 2 - this.width / 2,
-        y: canvas.height / 2
+        x: position.x,
+        y: position.y
       }
     }
   }
@@ -127,13 +127,54 @@ class Invader {
     )
   }
 
-  update() {
+  update({velocity}) {
     if (this.image) {
       this.draw()
       // adding horizontal movement
-      this.position.x += this.velocity.x
+      this.position.x += velocity.x
       // adding vertical movement
-      this.position.y += this.velocity.y
+      this.position.y += velocity.y
+    }
+  }
+}
+
+class Grid {
+  constructor() {
+    this.position = {
+      x: 0,
+      y: 0
+    }
+
+    this. velocity = {
+      x: 3,
+      y: 0
+    }
+
+    // creating a grid array of invaders
+    this.invaders = []
+
+    const columns = Math.floor(Math.random() * 10 + 5)
+    const rows = Math.floor(Math.random() * 5 + 2)
+    for (let x = 0; x < columns; x++) {
+      for (let y = 0; y < rows; y++) {
+        this.invaders.push(
+          new Invader({
+            position: {
+              x: x * 30,
+              y: y * 30
+            }
+          })
+        )
+      }
+    }
+  }
+
+  update() {
+    this.position.x += this.velocity.x
+    this.position.y += this.position.y
+
+    if (this.position.x +this.width >= canvas.width) {
+      this.velocity.x = -this.velocity.x
     }
   }
 }
@@ -143,7 +184,7 @@ const player1 = new Player()
 const projectiles = [
   ]
 
-const invader = new Invader()
+const grids = [new Grid]
 
 const keys = {
   a: {
@@ -167,7 +208,6 @@ function animate() {
   requestAnimationFrame(animate)
   context.fillStyle = 'black'
   context.fillRect(0, 0, canvas.width, canvas.height)
-  invader.update()
   player1.update()
   projectiles.forEach((projectile, i) => {
     // deleting projectiles that are out of the screen from the game
@@ -179,6 +219,13 @@ function animate() {
     } else {
       projectile.update()
     }
+  })
+
+  grids.forEach(grid => {
+    grid.update()
+    grid.invaders.forEach(invader => {
+      invader.update({ velocity: grid.velocity })
+    })
   })
 
   // movement: limited to fit the canvas, keyup & keydown and mini rotation of the image
