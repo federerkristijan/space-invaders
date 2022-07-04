@@ -210,6 +210,11 @@ const keys = {
   }
 }
 
+let frames = 0
+
+// creating invaders at random intervals
+let randomInterval = Math.floor(Math.random() * 500) + 500
+
 function animate() {
   requestAnimationFrame(animate)
   context.fillStyle = 'black'
@@ -263,6 +268,15 @@ function animate() {
   // } else {
   //   player1.velocity.x = 0
   // }
+
+  // spawning invaders
+  if (frames % randomInterval === 0) {
+  grids.push(new Grid())
+  randomInterval = Math.floor(Math.random() * 500) + 500
+  frames = 0
+}
+
+  frames++
 }
 
 animate()
