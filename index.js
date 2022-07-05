@@ -70,6 +70,7 @@ class Projectile {
   constructor({ position, velocity }) {
     this.position = position;
     this.velocity = velocity;
+    // size of a projectile
     this.radius = 4;
   }
 
@@ -227,7 +228,7 @@ function animate() {
     }
   });
 
-  grids.forEach((grid) => {
+  grids.forEach((grid, gridIndex) => {
     grid.update();
     // added index i
     grid.invaders.forEach((invader, i) => {
@@ -245,14 +246,26 @@ function animate() {
         ) {
           // splicing out the invader & he projectile (hit)
           setTimeout(() => {
-            // testing ifth e correct invader was found by a projectile
+            // testing if the correct invader was found by a projectile
             const invaderFound = grid.invaders.find((invaderF) =>  invaderF === invader);
 
             const projectileFound = projectiles.find(projectileF => projectileF === projectile)
 
+            // remove invader and projectile
             if (invaderFound &&projectileFound) {
               grid.invaders.splice(i, 1);
               projectiles.splice(p, 1);
+
+              if (grid.invaders.length > 0) {
+                const firstInvader = grid.invaders[0]
+                const lastInvader = grid.invaders[grid.invaders.length - 1]
+
+                grid.width = lastInvader.position.x - firstInvader.position.x + lastInvader.width
+
+                grid.position.x = firstInvader.position.x
+              } else {
+                grids.splice(gridIndex, 1)
+              }
             }
           }, 0);
         }
