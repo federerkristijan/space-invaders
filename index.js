@@ -31,7 +31,7 @@ class Player {
     // context.fillStyle = 'red'
     // context.fillRect(this.position.x, this. position.y, this.width, this.height)
 
-    // making a screen snapshot for rotation
+    // making a screen snapshoot for rotation
     context.save();
     context.translate(
       player1.position.x + player1.width / 2,
@@ -90,6 +90,27 @@ class Projectile {
   }
 }
 
+class InvaderProjectile {
+  constructor({ position, velocity }) {
+    this.position = position;
+    this.velocity = velocity;
+    // size of a projectile
+    this.width = 3;
+    this.height = 10;
+  }
+
+  draw() {
+    context.fillStyle = "yellow";
+    context.fillRect(this.position.x, this.position.y, this.width, this.height);
+  }
+
+  update() {
+    this.draw();
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
+  }
+}
+
 class Invader {
   constructor({ position }) {
     this.velocity = {
@@ -132,6 +153,22 @@ class Invader {
       // adding vertical movement
       this.position.y += velocity.y;
     }
+  }
+
+  shoot(invaderProjectiles) {
+    invaderProjectiles.push(
+      new InvaderProjectile({
+        position: {
+          x: this.position.x + this.width / 2,
+          y: this.position.y + this.height,
+        },
+
+        velocity: {
+          x: 0,
+          y: 5,
+        },
+      })
+    );
   }
 }
 
@@ -188,6 +225,8 @@ const projectiles = [];
 
 const grids = [];
 
+const invaderProjectiles = [];
+
 const keys = {
   a: {
     pressed: false,
@@ -216,6 +255,26 @@ function animate() {
   context.fillStyle = "black";
   context.fillRect(0, 0, canvas.width, canvas.height);
   player1.update();
+
+  // invaders projectiles
+  invaderProjectiles.forEach((invaderProjectile, i) => {
+    // removing projectiles that went off screen
+    if (
+      invaderProjectile.position.y + invaderProjectile.height >=
+      canvas.height
+    ) {
+      setTimeout(() => {
+        invaderProjectiles.splice(i, 1);
+      }, 0);
+    } else invaderProjectile.update();
+
+    // collision -> && player2
+    if (invaderProjectile.position.y + invaderProjectile.height >= player1.position.y && invaderProjectile.position.x + invaderProjectile.width >= player1.position.x && invaderProjectile.position.x <= player1.position.x + player1.width) {
+      console.log('you lose')
+    }
+  });
+
+  // player1 projectiles
   projectiles.forEach((projectile, i) => {
     // deleting projectiles that are out of the screen from the game
     if (projectile.position.y + projectile.radius <= 0) {
@@ -230,6 +289,12 @@ function animate() {
 
   grids.forEach((grid, gridIndex) => {
     grid.update();
+    // spawning projectiles
+    if (frames % 100 === 0 && grid.invaders.length > 0) {
+      grid.invaders[Math.floor(Math.random() * grid.invaders.length)].shoot(
+        invaderProjectiles
+      );
+    }
     // added index i
     grid.invaders.forEach((invader, i) => {
       invader.update({ velocity: grid.velocity });
@@ -241,30 +306,38 @@ function animate() {
           projectile.position.y - projectile.radius <=
             invader.position.y + invader.height &&
           projectile.position.x + projectile.radius >= invader.position.x &&
-          projectile.position.x - projectile.radius <= invader.position.x + invader.width &&
+          projectile.position.x - projectile.radius <=
+            invader.position.x + invader.width &&
           projectile.position.y + projectile.radius >= invader.position.y
         ) {
           // splicing out the invader & he projectile (hit)
           setTimeout(() => {
             // testing if the correct invader was found by a projectile
-            const invaderFound = grid.invaders.find((invaderF) =>  invaderF === invader);
+            const invaderFound = grid.invaders.find(
+              (invaderF) => invaderF === invader
+            );
 
-            const projectileFound = projectiles.find(projectileF => projectileF === projectile)
+            const projectileFound = projectiles.find(
+              (projectileF) => projectileF === projectile
+            );
 
             // remove invader and projectile
-            if (invaderFound &&projectileFound) {
+            if (invaderFound && projectileFound) {
               grid.invaders.splice(i, 1);
               projectiles.splice(p, 1);
 
               if (grid.invaders.length > 0) {
-                const firstInvader = grid.invaders[0]
-                const lastInvader = grid.invaders[grid.invaders.length - 1]
+                const firstInvader = grid.invaders[0];
+                const lastInvader = grid.invaders[grid.invaders.length - 1];
 
-                grid.width = lastInvader.position.x - firstInvader.position.x + lastInvader.width
+                grid.width =
+                  lastInvader.position.x -
+                  firstInvader.position.x +
+                  lastInvader.width;
 
-                grid.position.x = firstInvader.position.x
+                grid.position.x = firstInvader.position.x;
               } else {
-                grids.splice(gridIndex, 1)
+                grids.splice(gridIndex, 1);
               }
             }
           }, 0);
@@ -341,7 +414,7 @@ addEventListener("keydown", ({ key }) => {
       keys.s.pressed = true;
       break;
     case "q":
-      // console.log('shot')
+      // console.log('shoot')
       projectiles.push(
         new Projectile({
           position: {
@@ -383,7 +456,7 @@ addEventListener("keyup", ({ key }) => {
       keys.s.pressed = false;
       break;
     case "q":
-      console.log("shot");
+      console.log("shoot");
       keys.q.pressed = false;
       break;
   }
