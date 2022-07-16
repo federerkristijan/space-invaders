@@ -12,6 +12,7 @@ class Player {
     };
 
     this.rotation = 0;
+    this.opacity = 1;
 
     const image = new Image();
     image.src = "./images/spaceship.png";
@@ -33,6 +34,7 @@ class Player {
 
     // making a screen snapshoot for rotation
     ctx.save();
+    ctx.globalAlpha = this.opacity;
     ctx.translate(
       player1.position.x + player1.width / 2,
       player1.position.y + player1.height / 2
@@ -283,6 +285,11 @@ let frames = 0;
 // creating invaders at random intervals
 let randomInterval = Math.floor(Math.random() * 500) + 500;
 
+let game = {
+  over: false,
+  active: true,
+};
+
 // creating movable stars
 for (let i = 0; i < 100; i++) {
   particles.push(
@@ -321,19 +328,20 @@ function createParticles({ object, color, fades }) {
         radius: Math.random() * 3,
         // or operator for the customized players colors
         color: color || "#BAA0DE",
-        fades: true
+        fades: true,
       })
     );
   }
 }
 
 function animate() {
+  // if the game if not active, stop running the code (return)
+  if (!game.active) return;
   requestAnimationFrame(animate);
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   player1.update();
   particles.forEach((particle, i) => {
-
     // respawning stars in random places after old ones have left the screen
     if (particle.position.y - particle.radius >= canvas.height) {
       particle.position.x = Math.random() * canvas.width;
@@ -370,15 +378,25 @@ function animate() {
         player1.position.x &&
       invaderProjectile.position.x <= player1.position.x + player1.width
     ) {
+      console.log("you lose");
       // removing projectile after collision
       setTimeout(() => {
         invaderProjectiles.splice(i, 1);
+        // removing player1 and ending the game
+        player1.opacity = 0;
+        game.over = true;
       }, 0);
-      console.log("you lose");
+
+      // stopping the game after 2sec on game.over
+      setTimeout(() => {
+        game.active = false;
+        alert("Game over");
+      }, 2000);
+
       createParticles({
         object: player1,
         color: "white",
-        fades: true
+        fades: true,
       });
     }
   });
@@ -434,7 +452,7 @@ function animate() {
             if (invaderFound && projectileFound) {
               createParticles({
                 object: invader,
-                fades: true
+                fades: true,
               });
 
               grid.invaders.splice(i, 1);
@@ -506,6 +524,9 @@ function animate() {
 animate();
 
 addEventListener("keydown", ({ key }) => {
+  // when game.over stops running the code with return
+  if (game.over) return;
+
   switch (key) {
     case "a":
       console.log("left");
