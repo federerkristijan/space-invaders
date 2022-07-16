@@ -91,13 +91,14 @@ class Projectile {
 }
 
 class Particle {
-  constructor({ position, velocity, radius, color }) {
+  constructor({ position, velocity, radius, color, fades }) {
     this.position = position;
     this.velocity = velocity;
     // size of a particle
     this.radius = radius;
     this.color = color;
     this.opacity = 1;
+    this.fades = fades;
   }
 
   draw() {
@@ -116,7 +117,7 @@ class Particle {
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
 
-    this.opacity -= 0.01;
+    if (this.fades) this.opacity -= 0.01;
   }
 }
 
@@ -282,8 +283,29 @@ let frames = 0;
 // creating invaders at random intervals
 let randomInterval = Math.floor(Math.random() * 500) + 500;
 
+// creating movable stars
+for (let i = 0; i < 100; i++) {
+  particles.push(
+    new Particle({
+      position: {
+        // positioning stars
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+      },
+      velocity: {
+        // moving downwards the y-axis
+        x: 0,
+        y: 0.3,
+      },
+      radius: Math.random() * 2,
+      // or operator for the customized players colors
+      color: "white",
+    })
+  );
+}
+
 // creating multiple particles
-function createParticles({object, color}) {
+function createParticles({ object, color, fades }) {
   for (let i = 0; i < 15; i++) {
     particles.push(
       new Particle({
@@ -299,6 +321,7 @@ function createParticles({object, color}) {
         radius: Math.random() * 3,
         // or operator for the customized players colors
         color: color || "#BAA0DE",
+        fades: true
       })
     );
   }
@@ -310,11 +333,18 @@ function animate() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   player1.update();
   particles.forEach((particle, i) => {
+
+    // respawning stars in random places after old ones have left the screen
+    if (particle.position.y - particle.radius >= canvas.height) {
+      particle.position.x = Math.random() * canvas.width;
+      particle.position.y = -particle.radius;
+    }
+
     // countering globalAlpha and removing the particles
     if (particle.opacity <= 0) {
       setTimeout(() => {
         particles.splice(i, 1);
-      }, 0)
+      }, 0);
     } else {
       particle.update();
     }
@@ -347,7 +377,8 @@ function animate() {
       console.log("you lose");
       createParticles({
         object: player1,
-        color: 'white'
+        color: "white",
+        fades: true
       });
     }
   });
@@ -402,7 +433,8 @@ function animate() {
             // remove invader and projectile
             if (invaderFound && projectileFound) {
               createParticles({
-                object: invader
+                object: invader,
+                fades: true
               });
 
               grid.invaders.splice(i, 1);
