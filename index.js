@@ -1,5 +1,5 @@
 const canvas = document.querySelector("canvas");
-const context = canvas.getContext("2d");
+const ctx = canvas.getContext("2d");
 
 canvas.width = innerWidth;
 canvas.height = innerHeight;
@@ -28,25 +28,25 @@ class Player {
   }
 
   draw() {
-    // context.fillStyle = 'red'
-    // context.fillRect(this.position.x, this. position.y, this.width, this.height)
+    // ctx.fillStyle = 'red'
+    // ctx.fillRect(this.position.x, this. position.y, this.width, this.height)
 
     // making a screen snapshoot for rotation
-    context.save();
-    context.translate(
+    ctx.save();
+    ctx.translate(
       player1.position.x + player1.width / 2,
       player1.position.y + player1.height / 2
     );
 
-    context.rotate(this.rotation);
+    ctx.rotate(this.rotation);
 
     // restoring the screen
-    context.translate(
+    ctx.translate(
       -player1.position.x - player1.width / 2,
       -player1.position.y - player1.height / 2
     );
 
-    context.drawImage(
+    ctx.drawImage(
       this.image,
       this.position.x,
       this.position.y,
@@ -54,7 +54,7 @@ class Player {
       this.height
     );
 
-    context.restore();
+    ctx.restore();
   }
 
   update() {
@@ -75,18 +75,48 @@ class Projectile {
   }
 
   draw() {
-    context.beginPath();
-    context.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+    ctx.beginPath();
+    ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
 
-    context.fillStyle = "red";
-    context.fill();
-    context.closePath();
+    ctx.fillStyle = "red";
+    ctx.fill();
+    ctx.closePath();
   }
 
   update() {
     this.draw();
     this.position.x += this.velocity.x;
     this.position.y += this.velocity.y;
+  }
+}
+
+class Particle {
+  constructor({ position, velocity, radius, color }) {
+    this.position = position;
+    this.velocity = velocity;
+    // size of a particle
+    this.radius = radius;
+    this.color = color;
+    this.opacity = 1;
+  }
+
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.opacity;
+    ctx.beginPath();
+    ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+    ctx.closePath();
+    ctx.restore();
+  }
+
+  update() {
+    this.draw();
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
+
+    this.opacity -= 0.01;
   }
 }
 
@@ -100,8 +130,8 @@ class InvaderProjectile {
   }
 
   draw() {
-    context.fillStyle = "yellow";
-    context.fillRect(this.position.x, this.position.y, this.width, this.height);
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
   }
 
   update() {
@@ -133,10 +163,10 @@ class Invader {
   }
 
   draw() {
-    // context.fillStyle = 'red'
-    // context.fillRect(this.position.x, this. position.y, this.width, this.height)
+    // ctx.fillStyle = 'red'
+    // ctx.fillRect(this.position.x, this. position.y, this.width, this.height)
 
-    context.drawImage(
+    ctx.drawImage(
       this.image,
       this.position.x,
       this.position.y,
@@ -227,6 +257,8 @@ const grids = [];
 
 const invaderProjectiles = [];
 
+const particles = [];
+
 const keys = {
   a: {
     pressed: false,
@@ -250,11 +282,43 @@ let frames = 0;
 // creating invaders at random intervals
 let randomInterval = Math.floor(Math.random() * 500) + 500;
 
+// creating multiple particles
+function createParticles({object, color}) {
+  for (let i = 0; i < 15; i++) {
+    particles.push(
+      new Particle({
+        position: {
+          x: object.position.x + object.width / 2,
+          y: object.position.y + object.height / 2,
+        },
+        velocity: {
+          // with - 0.5 adding directions
+          x: (Math.random() - 0.5) * 3,
+          y: (Math.random() - 0.5) * 3,
+        },
+        radius: Math.random() * 3,
+        // or operator for the customized players colors
+        color: color || "#BAA0DE",
+      })
+    );
+  }
+}
+
 function animate() {
   requestAnimationFrame(animate);
-  context.fillStyle = "black";
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   player1.update();
+  particles.forEach((particle, i) => {
+    // countering globalAlpha and removing the particles
+    if (particle.opacity <= 0) {
+      setTimeout(() => {
+        particles.splice(i, 1);
+      }, 0)
+    } else {
+      particle.update();
+    }
+  });
 
   // invaders projectiles
   invaderProjectiles.forEach((invaderProjectile, i) => {
@@ -268,9 +332,23 @@ function animate() {
       }, 0);
     } else invaderProjectile.update();
 
-    // collision -> && player2
-    if (invaderProjectile.position.y + invaderProjectile.height >= player1.position.y && invaderProjectile.position.x + invaderProjectile.width >= player1.position.x && invaderProjectile.position.x <= player1.position.x + player1.width) {
-      console.log('you lose')
+    // projectile collides with player1 -> && player2
+    if (
+      invaderProjectile.position.y + invaderProjectile.height >=
+        player1.position.y &&
+      invaderProjectile.position.x + invaderProjectile.width >=
+        player1.position.x &&
+      invaderProjectile.position.x <= player1.position.x + player1.width
+    ) {
+      // removing projectile after collision
+      setTimeout(() => {
+        invaderProjectiles.splice(i, 1);
+      }, 0);
+      console.log("you lose");
+      createParticles({
+        object: player1,
+        color: 'white'
+      });
     }
   });
 
@@ -299,7 +377,7 @@ function animate() {
     grid.invaders.forEach((invader, i) => {
       invader.update({ velocity: grid.velocity });
 
-      // projectiles shoot invaders, added index p
+      // projectiles hit invaders, added index p
       projectiles.forEach((projectile, p) => {
         // checking for collision and removing the invader
         if (
@@ -310,7 +388,7 @@ function animate() {
             invader.position.x + invader.width &&
           projectile.position.y + projectile.radius >= invader.position.y
         ) {
-          // splicing out the invader & he projectile (hit)
+          // splicing out the invader & the projectile (hit)
           setTimeout(() => {
             // testing if the correct invader was found by a projectile
             const invaderFound = grid.invaders.find(
@@ -323,6 +401,10 @@ function animate() {
 
             // remove invader and projectile
             if (invaderFound && projectileFound) {
+              createParticles({
+                object: invader
+              });
+
               grid.invaders.splice(i, 1);
               projectiles.splice(p, 1);
 
