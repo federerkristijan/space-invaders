@@ -1,3 +1,4 @@
+const scoreEl = document.querySelector("#scoreEl");
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -290,6 +291,8 @@ let game = {
   active: true,
 };
 
+let score = 0;
+
 // creating movable stars
 for (let i = 0; i < 100; i++) {
   particles.push(
@@ -450,6 +453,11 @@ function animate() {
 
             // remove invader and projectile
             if (invaderFound && projectileFound) {
+              // updating the score
+              score += 1
+              // displaying the updateed score
+              scoreEl.innerHTML = score;
+
               createParticles({
                 object: invader,
                 fades: true,
